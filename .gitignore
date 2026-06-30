@@ -1,0 +1,12 @@
+.DS_Store
+*.swp
+tmp/
+
+# Real scrub rules — gitignored so the public repo never carries a plaintext
+# catalog of the private identifiers being scrubbed. See scrub.example.sh.
+scrub.sh
+
+# Real exclusion list — gitignored because the excluded filenames are themselves
+# private-project references (a guide named for a codename reveals the codename).
+# See .syncignore.example.
+.syncignore
