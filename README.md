@@ -14,8 +14,6 @@ reference/    Workflows, conventions, templates, patterns pulled from my
               dev-reference library. These are what the commands link to.
 sync.sh       Rebuild this repo from my private sources (maintainers only)
 install.sh    Symlink commands + skills into your ~/.claude/
-scrub.example.sh      Template for the (gitignored) identifier-scrub rules
-.syncignore.example   Template for the (gitignored) exclusion list
 ```
 
 ## The workflow
@@ -70,7 +68,7 @@ Hooks in `hooks/` are examples. Read them, decide which ones match your workflow
 
 ## Maintenance
 
-This repo is derived. Source of truth is my private `claude-config` + `dev-reference` repos. I run `./sync.sh` periodically to rebuild the public tree. It scrubs identifiers and respects an exclusion list, but both of those carry the private terms/filenames they operate on, so they live in **gitignored** files (`scrub.sh`, `.syncignore`) — the public repo only ships the `*.example` templates. To run a sync yourself, `cp scrub.example.sh scrub.sh` and `cp .syncignore.example .syncignore`, then fill them in. Don't edit files in `commands/`, `skills/`, `hooks/`, or `reference/` directly — edits get wiped on next sync. If you want to contribute back, open an issue.
+This repo is derived. Source of truth is my private `claude-config` + `dev-reference` repos. I run `./sync.sh` periodically to rebuild the public tree (scrubs identifiers, respects an exclusion list). The scrub rules and exclusion list name the private terms/files they operate on, so they live in **gitignored** files (`scrub.sh`, `.syncignore`) that the public repo doesn't carry — `sync.sh` is maintainers-only. Don't edit files in `commands/`, `skills/`, `hooks/`, or `reference/` directly — edits get wiped on next sync. If you want to contribute back, open an issue.
 
 ## Credits
 

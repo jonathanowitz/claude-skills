@@ -53,13 +53,11 @@ fi
 
 echo "→ Scrubbing personal identifiers..."
 # Scrub rules live in scrub.sh (gitignored) so the public repo never carries a
-# plaintext catalog of the personal/project identifiers being scrubbed. See
-# scrub.example.sh for the template; copy it to scrub.sh and fill in your real
-# mappings.
+# plaintext catalog of the personal/project identifiers being scrubbed.
 SCRUB="$REPO/scrub.sh"
 if [[ ! -f "$SCRUB" ]]; then
-  echo "ERROR: $SCRUB not found. Copy scrub.example.sh to scrub.sh and add your" >&2
-  echo "       identifier mappings before running sync." >&2
+  echo "ERROR: $SCRUB not found. It's gitignored (it holds the private identifier" >&2
+  echo "       mappings); create it locally before running sync." >&2
   exit 1
 fi
 bash "$SCRUB" "$REPO"
