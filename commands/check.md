@@ -15,7 +15,7 @@ Run from the current working directory (or the primary code repo if in a docs-on
 gh repo view --json nameWithOwner -q .nameWithOwner
 ```
 
-- If this is `example-context` or another non-code repo, target `USER/example-app` instead
+- If this is a docs-only repo in the example-app issue-tracker orbit (`example-context`, `dev-reference`, `claude-config` — see `references/product-json.md`'s orbit rule) and has no issues of its own, target `USER/example-app` instead. Any other repo — including one with its own `.claude/product.json` `issue_tracker` declaration — uses its own remote/declared tracker.
 - Store the repo identifier for all subsequent commands
 
 ## Step 2: Open Issues Summary
@@ -162,6 +162,6 @@ Generated: YYYY-MM-DD HH:MM
 
 - **Read-only** — This command never modifies anything. No issue updates, no git operations, no file writes.
 - **Fail gracefully** — If `gh` auth fails or a specific API call errors, show what you can and note what failed.
-- **Repo detection** — When run from `example-context`, default to `USER/example-app`. For any other repo, use its own remote.
+- **Repo detection** — Apply the same rule as Step 1: orbit repos (`example-context`, `dev-reference`, `claude-config`) default to `USER/example-app` per the issue-tracker orbit rule; every other repo uses its own remote or declared `issue_tracker`.
 - **Keep it scannable** — Use short lines, consistent formatting, and group by section. The point is a quick glance, not a deep dive.
 - **No file output** — Display directly to the user. Don't save to a file unless explicitly asked.

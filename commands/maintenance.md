@@ -13,7 +13,7 @@ Argument: `$ARGUMENTS` (optional — ignored, always reads all sessions since la
 
 ## Phase 1: Gather Session Data
 
-1. Read MEMORY.md and find the `## Last Maintenance` section to get the date of the last run
+1. Read MEMORY.md and find the `## Last Maintenance` section to get the date of the last run **and its pointer to the prior measurement-targets file**. Read that file — `~/.claude/maintenance/measurement-targets-*.md` (most recent) — its numbered targets are THIS run's scoring baseline; trend each against the current window (Phase 2c / Phase 5). The full targets block lives here, not in MEMORY.md, so it doesn't bloat the every-turn prefix.
 2. List all files in `~/.claude/sessions/` sorted by date
 3. Read **all session files dated after the last maintenance date**. If no prior maintenance exists, read all sessions.
 4. For each session, extract into a working dataset:
@@ -149,9 +149,13 @@ Present findings as:
 ## Phase 4: Take Action
 
 **Automated actions (do these immediately):**
+
+These writes touch `~/.claude/projects/*/memory/*`, which the memory-capture gate (`~/.claude/hooks/memory-capture-gate.sh`) blocks by default. Before item 1, run `touch ~/.claude/memory-disposition.active`; after item 3, run `rm ~/.claude/memory-disposition.active`. This is an approved-commit flow, not a staging write — the flag tells the gate to allow it.
+
 1. Update MEMORY.md — add confirmed patterns, remove stale entries, correct inaccuracies
 2. Promote misplaced memory entries — move general-purpose knowledge from memory files to dev-reference docs (per 3a memory-transfer analysis). Delete the memory file and MEMORY.md pointer after promoting.
 3. Note the date of this maintenance run in MEMORY.md under a `## Last Maintenance` section
+4. Write the refreshed Measurement Targets for the next run to `~/.claude/maintenance/measurement-targets-<this-date>.md` (the full numbered block, scored and updated this run), and repoint MEMORY.md's `## Last Maintenance` line at it. Keep the targets in this file, NOT inline in MEMORY.md — MEMORY.md is re-read on every turn of every session, so the block belongs in the maintenance dir where only `/maintenance` reads it. This is the file Phase 1 of the next run will pick up.
 
 **Proposed actions (present to USER for approval):**
 

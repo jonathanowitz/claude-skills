@@ -38,7 +38,14 @@ if [ -n "$MAIN_REPO" ]; then
 fi
 
 if [ -f "$WORKTREE_PATH/package.json" ]; then
-  (cd "$WORKTREE_PATH" && npm install --silent 2>/dev/null)
+  # Package-manager detection: pnpm repos commit a pnpm-workspace.yaml (AS-9,
+  # the rebuild stack); npm repos do not. Stay conditional during the coexistence
+  # window so npm worktrees still get `npm install` and pnpm worktrees get pnpm.
+  if [ -f "$WORKTREE_PATH/pnpm-workspace.yaml" ]; then
+    (cd "$WORKTREE_PATH" && pnpm install --silent 2>/dev/null)
+  else
+    (cd "$WORKTREE_PATH" && npm install --silent 2>/dev/null)
+  fi
 fi
 
 echo "WORKTREE_SETUP_COMPLETE: Environment bootstrapped at $WORKTREE_PATH"

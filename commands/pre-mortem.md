@@ -20,7 +20,7 @@ Each persona runs as an independent agent with no visibility into other personas
 
 Find the shaped brief for the project. Check:
 1. If `$ARGUMENTS` is a file path, read it directly
-2. Check `example-context/briefs/` for matching brief files
+2. Check the current repo's briefs location for matching brief files (example-app resolves this via its `context_repo`, `example-context/briefs/`)
 3. Check `~/.claude/project-ideas.md` for brief pointers
 4. If ambiguous, ask USER which brief to analyze
 
@@ -279,7 +279,7 @@ Both options are valid for some projects (e.g., a bug fix doesn't need a refacto
 
 ### Step 6: Save and Present
 
-1. Save the report to `tmp/pre-mortem-[project-slug]-YYYY-MM-DD.md`
+1. Save the report to `<context_repo>/tmp/pre-mortem-[project-slug]-YYYY-MM-DD.md` — the context sibling resolved via `resolve_product_field context_repo` (example-app → `~/Projects/example-context/tmp/`), NOT the session-cwd `tmp/`. A pre-mortem is a thinking artifact; it belongs in the context repo, never in the code repo. See `conventions/formative-artifact-routing.md`. (Repo with no `context_repo` declared: fall back to the repo's own `tmp/`.)
 2. Present a summary to USER highlighting:
    - How many HIGH/MEDIUM/LOW risks found
    - Any consensus concerns (3+ personas)

@@ -11,6 +11,8 @@ Execute an approved implementation plan autonomously, producing a committed bran
 
 **This is a walk-away skill.** After launching, USER should not need to intervene until the PR is created.
 
+**Stack scope — learn it from the repo under review, don't assume it.** This pipeline was written against example-app's stack (Supabase migrations, `vercel dev`, Docker + Playwright E2E, and its vanilla-JS DOM conventions). The specific commands, selectors, API routes, and ready-signals shown throughout the `/implement*` family are **worked examples of that stack**, not universal facts. When running in a repo whose stack differs (including example-app's own Vite/React rebuild), read that repo's `CLAUDE.md`, its test conventions, and its existing tests, and carry the same rigor to *its* toolchain — not these literal names.
+
 ## Prerequisites
 
 1. **Find the plan file.** Check in order:
@@ -52,6 +54,8 @@ Run `/review-tests` immediately after `/implement-e2e`. This is the Stage 4 qual
 **Mechanical backstop.** The PostToolUse hook `test-review-gate-post.sh` tracks test-file writes in the worktree; once cumulative tests cross 5, the PreToolUse hook `test-review-gate-pre.sh` denies implementation writes and test-suite Bash runs until `/review-tests` resolves all blockers + warnings and removes the lock at `/tmp/review-tests-pending-<cwd_hash>.lock`. The same gate fires inside `/implement-slice` Step 3.5 (per-slice unit tests). No bypass short of explicit `rm` of the lock (audit trail preserved). See `~/.claude/rules/hooks-and-agents.md` § Autonomous Agents.
 
 **E2E specs are IMMUTABLE after this point.** All subsequent phases may only modify application code to satisfy the tests.
+
+**Human review checkpoint after `/review-tests` PASS — STOP, do not auto-proceed to GREEN.** A `/review-tests` PASS clears the *mechanical* gate; it is NOT authorization to start implementation. The mechanical gate and USER's human review are two distinct approvals — clearing the first does not grant the second. After PASS, present the reviewed test files (or a tight summary) and **wait for USER's explicit "go to green"** before dispatching any GREEN / `/implement-slice` work. (Evidence: 2026-06-26 and 2026-06-29 — dispatched the GREEN implementation agent straight off a `/review-tests` PASS without pausing; 2026-06-29 USER: "you did it again, I did not say go to green yet.")
 
 ### Each Vertical Slice
 Run `/implement-slice` with the slice spec from the plan. Each slice writes unit tests (RED) then implementation (GREEN). The E2E specs remain RED during this phase — they turn GREEN after wiring.
@@ -98,6 +102,10 @@ Do NOT relay on the brief's spec for what prior phases built. Let downstream ski
 ## Subagent Dispatch Protocol (mandatory)
 
 Every `Agent` tool call made while running `/implement` — planning, parallel Phase 2 tracks, Phase 3 integration, wiring check, PR review, any helper — MUST include **EXPLICIT output-persistence instructions** in the prompt. Do not rely on the agent to invent the right output format.
+
+**Every location/convention claim in a dispatch prompt must carry a grep-verified citation.** A prompt that tells a subagent to "add X at path Y", "install the plugin under workspace Z", "follow the pattern in file F", or "the RPC is called N" asserts a fact the subagent cannot see the basis for — and it will obey a wrong instruction faithfully. Before writing any "do X at location Y" into a dispatch prompt, grep to confirm Y, and include the citation (`per <file>:<line>`) in the prompt so the subagent can self-check rather than comply blindly. This is Critical Rule #3 (verify external claims) applied to the prompts you *write*, not just to claims you act on. (Evidence: 2026-07-06 — an FS-5 dispatch prompt specified a Capacitor plugin install at the `app/` workspace when the repo convention is repo-root; the subagent flagged the conflict but obeyed the explicit wrong location anyway.)
+
+**Dispatch prompts must also carry the PRODUCT facts, not just the technical spec** — who the user actually is, which scenarios are live, and which cases the data model *can* represent but never *does* (e.g. a coach works at one gym → no cross-gym name collisions; see memory `project_coaches_single_gym_no_name_collision`). A subagent reasons *inside* whatever premise its prompt hands it: give it only the schema and it will faithfully harden a branch, a validation, or six tests for a user who doesn't exist — and a cross-model reviewer handed the same premise reinforces the false case instead of challenging it. This is the MVS ladder's **rung 0 ("is this scenario real?")** applied at dispatch time: the agent can't run rung 0 itself because it can't see the product, so you have to pre-answer it in the prompt. Before locking any conditional/schema/test into a dispatch, state the live scenarios explicitly. (Evidence: 2026-07-16, three times in five days — a parent-gym-qualifier span rule [6 tests + fixture + schema expansion] built for a multi-gym coach who doesn't exist; both reviewers reinforced the false premise. See `~/Projects/dev-reference/conventions/minimum-viable-solution-ladder.md` rung 0.)
 
 Paste this block into every dispatch prompt (customize `<phase-name>` and required-sections):
 

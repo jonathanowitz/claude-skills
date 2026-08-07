@@ -20,6 +20,16 @@ PROMPT=$(echo "$INPUT" | jq -r '.prompt // .message // empty' 2>/dev/null)
 # Bail out cleanly if no prompt
 [ -z "$PROMPT" ] && exit 0
 
+# Skip background-task notifications and system-reminder payloads. These arrive as
+# "user messages" but are actually subagent output / harness events, and their text
+# routinely contains corrective phrases quoted from session reflections (e.g. an
+# extraction agent returning "we already did X"). Nudging on those is a false positive.
+# (2026-07-06 maintenance: the `we (already|just) did` pattern fired on a maintenance
+# extraction agent's returned telemetry, not a real redirect.)
+if echo "$PROMPT" | head -c 400 | grep -qE '<task-notification>|<system-reminder>|tool-use-id|SYSTEM NOTIFICATION - NOT USER INPUT'; then
+  exit 0
+fi
+
 # Skip slash-command-only messages — those are explicit invocations, not redirects.
 # Match: starts with `/` followed by a command name and optional whitespace/args
 if echo "$PROMPT" | head -c 200 | grep -qE '^/[a-z][a-z0-9_-]*(\s|$)'; then

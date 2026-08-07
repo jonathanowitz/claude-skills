@@ -17,6 +17,8 @@ The specs will fail (RED) against stubs because the features don't exist yet. Th
 
 Use route interception to control API responses where needed (e.g., injecting mock data to test display behavior).
 
+**Stack scope.** The selectors, `data-*` attributes, API routes, and ready-signals shown throughout this skill (`.entry-card`, `data-app-ready`, `/api/v1/*`, `?comp=`) are example-app **worked examples**. Learn the actual conventions from the repo under review — its `CLAUDE.md`, its e2e-conventions doc, and its existing test files — and translate the same *detail*, not these literal names.
+
 ## Before Writing Any Test
 
 Follow `~/Projects/dev-reference/conventions/e2e-test-conventions.md` strictly. In particular:

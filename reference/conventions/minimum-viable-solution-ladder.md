@@ -19,6 +19,22 @@ that genuinely solves the understood problem.
 
 Before choosing how to build something, ask in order — take the first rung that answers yes:
 
+0. **Is this scenario even real?** → Before building any branch, schema column, conditional,
+   or test that handles a *user scenario*, confirm the scenario actually occurs in the product.
+   Check project memory (e.g. `project_coaches_single_gym_no_name_collision`) and the real data
+   (`seed.sql`, the actual tables) — a schema that *can* represent X is not evidence X *happens*.
+   If the scenario doesn't occur, the branch is YAGNI; stop here. This fires *before* rung 1,
+   because "does this need to exist" usually hinges on "does this case exist," and the check has
+   to happen at design time — a review pass won't catch it, because reviewers reason *inside*
+   whatever premise they're handed. **A dispatched agent inherits this blind spot**: its prompt
+   must carry the product facts (who the user actually is, which scenarios are live), not just the
+   technical spec — otherwise it hardens logic for a user who doesn't exist. (Evidence: 2026-07-16,
+   three times in five days — a full parent-gym-qualifier span rule [6 tests + fixture + schema
+   expansion] built for a multi-gym coach who doesn't exist ["way over thinking this"]; a decision
+   question premised on "a gym's flagship team shares the gym's name," false per seed data; a
+   multi-gym team-name collision assumed realistic from the data model's *capability*. The memory
+   stating none of these occur was loaded the entire session but never queried at design time, and
+   both cross-model reviewers reinforced the false premise instead of challenging it.)
 1. **Does this need to exist at all?** → Skip it (YAGNI). Is there a product-level solution
    that removes the need? (See `pre-implementation-checklist.md` "Product solution first.")
 2. **Already in this codebase?** → Reuse / adapt it. This rung *is* the Reuse Audit

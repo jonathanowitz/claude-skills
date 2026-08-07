@@ -194,4 +194,4 @@ A breadboard is the spec — it captures places, affordances, and wiring. But af
 - Not production code — throwaway after shaping
 - Not a replacement for the breadboard — the breadboard is the contract, the prototype is a validation pass
 
-Use any lightweight clickable-prototype tool for this step.
+See `~/Projects/dev-reference/guides/example-d-prototyping.md` for setup and usage.

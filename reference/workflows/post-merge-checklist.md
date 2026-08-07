@@ -2,6 +2,8 @@
 
 > Run through this checklist after every PR merge. Keeps reference docs, tracking, and artifacts in sync with shipped code.
 
+**Scope note:** The checkout path, board name ("Project Tracker"), and `example-context/` doc set below are example-app's — substitute the merged PR's own repo's checkout path, its own tracker/board (see `references/product-json.md` — orbit repos resolve to the example-app board, every other repo tracks its own), and its own context sibling if it declares one. A repo with no context sibling has no step-3 doc set to update — skip that section rather than forcing it.
+
 ## 0. Capture Before You Forget (mechanical reminder)
 
 `bash-post-hook.sh` creates a lock file (`/tmp/post-merge-capture-pending-*.lock`) after every `gh pr merge`. `post-merge-gate.sh` checks for that lock on every subsequent Bash command and injects a `POST_MERGE_CAPTURE_PENDING` system reminder until `/session-capture` runs (which deletes the lock via auto-clear once a session file referencing the PR exists).
@@ -16,24 +18,24 @@ If you ever see a `POST_MERGE_CAPTURE_PENDING` reminder, run `/session-capture` 
 
 - Verify `fixes #NN` or `closes #NN` auto-closed the GitHub issue
 - If not auto-closed, close manually with a comment noting the merged PR
-- Confirm the issue moved to "Done" in the GitHub Project ("Project Tracker")
+- Confirm the issue moved to "Done" on the repo's tracker board (example-app orbit repos → GitHub Project "Project Tracker"; every other repo's own board)
   - If not: `gh project item-edit` to move it
 
 ## 2. Clean Up the Worktree
 
-Sessions now run from the main `example-app` checkout with read/write across all worktrees via absolute paths. Worktree removal happens immediately in the post-merge cleanup agent — no deferral needed.
+Sessions run from the main checkout of the repo the merged PR belongs to (e.g. example-app's main checkout for an example-app PR), with read/write across all worktrees via absolute paths. Worktree removal happens immediately in the post-merge cleanup agent — no deferral needed.
 
 - **First, drain the slice's known-scratch `tmp/` files** so the non-force removal succeeds and `--force` (which triggers the curated-rescue → orphan-accumulation path) is never reached for a pure-scratch worktree. Use the exact-name ALLOWLIST in `claude-config/rules/hooks-and-agents.md` § POST_MERGE_HOOK (`pr-gate.green`, `e2e-results.json`, `e2e-pass.txt`, `walk-*.md`, `test-review-*.md`, `validate-*.md`, `seed-*.mjs`, `verify-*.mjs`, `gemini-*.md`, `pr-body-*.md`, `squash-body-*.md`) — never `tmp/*.json`/`tmp/*.md` wholesale, so curated artifacts stay protected.
-- Run from anywhere (always target main by absolute path):
-  - `git -C $HOME/Projects/example-app worktree remove <worktree-path>`
-  - `git -C $HOME/Projects/example-app branch -D <branch-name>`
+- Run from anywhere (always target the repo's main checkout by absolute path):
+  - `git -C <repo-root> worktree remove <worktree-path>` (e.g. `git -C $HOME/Projects/example-app worktree remove ...`)
+  - `git -C <repo-root> branch -D <branch-name>`
 - Only worktree leftovers expected: `.claude/settings.local.json` diffs + any untracked files already copied to main. If those are the only uncommitted items, use `--force`. If anything else is uncommitted, stop and surface it before removing.
 - Verify the branch was deleted on remote (GitHub's auto-delete should handle this). If branch persists: `git push origin --delete <branch-name>`
 - `git worktree prune` cleans any stale refs if the directory was removed out-of-band
 
-## 3. Update Reference Docs (example-context)
+## 3. Update Reference Docs (context sibling, if the repo has one)
 
-For each doc below, check whether the merged changes affect it. If yes, update the content **and bump the `Last Updated` date** at the bottom of the file. Stale architecture docs cause downstream planning errors — treat this step as mandatory, not optional.
+Skip this whole section if the repo has no context sibling (`resolve_product_field context_repo` returns nothing) — most repos don't, and that's normal. For example-app, this resolves to `example-context`. For each doc below, check whether the merged changes affect it. If yes, update the content **and bump the `Last Updated` date** at the bottom of the file. Stale architecture docs cause downstream planning errors — treat this step as mandatory, not optional, whenever the repo has a context sibling.
 
 ### Architecture docs (`architecture/`)
 
@@ -76,7 +78,7 @@ For each doc below, check whether the merged changes affect it. If yes, update t
 
 - Delete temp validation scripts (`tmp/validate-*.js`, `tmp/validate-*.md`)
 - Delete stale test data files
-- Run `git status` in example-context — commit updates, delete orphans
+- Run `git status` in the repo's context sibling if it has one (example-app → `example-context`) — commit updates, delete orphans
 
 ## Shortcut: Trivial Changes
 

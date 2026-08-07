@@ -36,13 +36,17 @@ if [[ "$TOOL_NAME" == "Bash" ]]; then
     block "Base64-decode pipe pattern detected — possible obfuscated command injection"
   fi
 
-  # Environment variable exfiltration via network tools
-  if echo "$CMD" | grep -qE '(env|printenv|set|echo[[:space:]]+\$)[^;|]*\|[^;]*(curl|wget|nc|ncat)'; then
+  # Environment variable exfiltration via network tools.
+  # Word-boundary the tokens so benign text doesn't match: `set` must be the word
+  # `set` (not "change**set**") and `nc` the command `nc` (not "insta**nc**es").
+  # (2026-07-06 maintenance: this FP blocked a read-only grep whose alternation
+  # syntax `\|` supplied the pipe and whose args contained "changeset"+"instances".)
+  if echo "$CMD" | grep -qE '(\b(env|printenv|set)\b|echo[[:space:]]+\$)[^;|]*\|[^;]*\b(curl|wget|nc|ncat)\b'; then
     block "Environment variable exfiltration pattern detected (piping env to network tool)"
   fi
 
   # Specific credential env vars referenced alongside network commands
-  if echo "$CMD" | grep -qiE '(ANTHROPIC_API_KEY|AWS_SECRET_ACCESS_KEY|SUPABASE_SERVICE_ROLE_KEY|VERCEL_TOKEN|STRIPE_SECRET_KEY)[^;]*\|?[[:space:]]*(curl|wget|nc)'; then
+  if echo "$CMD" | grep -qiE '(ANTHROPIC_API_KEY|AWS_SECRET_ACCESS_KEY|SUPABASE_SERVICE_ROLE_KEY|VERCEL_TOKEN|STRIPE_SECRET_KEY)[^;]*\|?[[:space:]]*\b(curl|wget|nc)\b'; then
     block "Credential exfiltration attempt — known secret env var referenced in network command"
   fi
 

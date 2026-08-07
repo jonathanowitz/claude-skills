@@ -1,6 +1,5 @@
 ---
 description: Process all queued session captures — update shared docs, commit repos, and clear the queue
-disable-model-invocation: true
 ---
 
 # Drain Captures
@@ -49,6 +48,7 @@ For each session file in the batch:
    - Add the block's counts to the session file's Tool Telemetry totals
 7. Replace the `_pending drain merge_` placeholder in Tool Telemetry with a note: `_Checkpoint telemetry merged from N block(s): HH:MM, HH:MM, ..._`
 8. **Delete the checkpoint file only after all sessions for that date in the batch are fully processed.** If sessions from that date remain unprocessed in the current batch, do not delete yet.
+9. **NEVER delete the checkpoint file for TODAY'S date — merge from it and leave it in place.** Today's file is the live append target for every session still running, including the one that spawned this drain. Deleting it destroys telemetry events written after your read, and the writing session gets no error: `cat >> <deleted-path>` silently recreates the file, so the events land in a new inode nobody will ever drain. The whole point of appending events to disk immediately is surviving compaction — a drain that deletes the file defeats exactly that. Only delete checkpoint files whose date is strictly BEFORE today; today's is cleaned up by a later drain, on a later day, when nothing is writing to it. (Evidence: 2026-07-29 — a drain deleted `checkpoint-2026-07-29.md` mid-session; the parent session's two subsequent redirect events vanished, and the next drain reported the file as never having existed. Recovered only because the same events had been written independently into the session file's Reflections.)
 
 If no checkpoint file exists for a session's date, replace the placeholder with: `_No checkpoint file for this date._`
 
@@ -76,6 +76,24 @@ For each session file in the batch:
 6. Append provenance note (replacing or supplementing the checkpoint note): `_Subagent telemetry merged from: <list of phase names>. Window: <lower> – <upper>._`
 
 If no reports match, note: `_No subagent reports in window <lower> – <upper>._`
+
+### Step 3c — Merge pre-compaction telemetry extracts into session files
+
+The PreCompact hook (`pre-compact-snapshot.sh`) writes a MECHANICAL telemetry extract to `~/.claude/precompact-captures/telemetry-{date}-{HHMMSS}-{session8}.md` every time a session compacts (auto or manual). Each extract carries transcript-derived telemetry captured at compaction time — exact tool tally, session metrics, files touched, verbatim user prompts, bash commands run, and tagged reflection events — independent of what the model remembered to self-report. A long session may compact several times, producing several extracts; short sessions that never compact have none (expected — the model's own counts suffice there).
+
+For each session file in the batch:
+
+1. Use the SAME `[lower, upper]` time window as Step 3b.
+2. Find all extracts in `~/.claude/precompact-captures/` whose filename timestamp (`{date}-{HHMMSS}`) falls within the window. If sessions overlap, disambiguate using the `**Session:**` UUID line inside each extract; attribute each extract to exactly one session.
+3. For each matched extract:
+   - **Tool Telemetry and Session Metrics are mechanical — treat them as authoritative.** Where they conflict with the model's from-memory counts already in the session file, REPLACE the estimate with the extract's number and mark it `[mechanical — precompact extract]`. Exact counts beating recalled ones is the whole point of the extract.
+   - Merge **Files Touched** into the session's "Files modified" list.
+   - Fold **Tagged Reflection Events** into Reflections, but DEDUPE against events already merged from the checkpoint in Step 3a (the extract also greps the checkpoint, so overlap is expected). Prefix genuinely new ones `[precompact · HHMMSS]`.
+   - Scan the **User Prompts** and **Bash Commands** sections for redirect / validation-skip signals the model did not self-report, and add any found as Reflections.
+4. Provenance note (supplementing 3a/3b): `_Pre-compaction telemetry merged from N extract(s): HHMMSS, ..._`
+5. Do NOT delete extracts — like subagent reports (3b) they are matched by window, and the hook rotates them at 30 files. Window non-overlap prevents double-merge across drains.
+
+If no extracts match, note: `_No pre-compaction extracts in window <lower> – <upper>._`
 
 ### Step 4 — Create GitHub issues
 
@@ -112,7 +130,7 @@ Bump `**Last Updated:**` on anything touched. Skip files that didn't change.
 
 ### Step 7 — Update ROADMAP
 
-If any session completed a feature or changed priorities, update `~/Projects/example-app/ROADMAP.md`. Skip if no roadmap impact across all sessions.
+If any session touched a project and completed a feature or changed priorities in it, update that project's own `ROADMAP.md` (e.g. a session that touched example-app updates `~/Projects/example-app/ROADMAP.md`). Skip a project with no roadmap impact, and skip entirely if no session in the batch had roadmap impact.
 
 ### Step 8 — Commit example-context and dev-reference
 

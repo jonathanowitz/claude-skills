@@ -42,6 +42,10 @@ If the probe doesn't print `ok` (auth error, ineligible-tier, empty), the cross-
    - **Model only** (it found it, you missed it) → investigate before presenting
    - **Contradiction** (direct disagreement) → flag for USER with both perspectives
 
+   **Split every finding into HAZARD and REMEDY, and verify them separately.** A finding bundles two independent claims: "here is a failure" and "here is the fix." They can have different truth values, and a correct hazard lends unearned credibility to whatever fix is attached to it — you verify the failure, feel the finding check out, and adopt the remedy untested. Trace the proposed fix through the *same concrete fixture* that demonstrates the hazard, and if it does not prevent that exact case, say so and solve it yourself. Confirming the hazard is not confirming the finding. (Evidence: 2026-07-27 #1224 — Gemini correctly found that the `/operator` index could eject a multi-gym operator to fan home on a stale bookmark, then prescribed restoring a deleted carve-out whose condition, `if (sameType.length > 0) return null`, fires precisely when the operator holds other programs. Adopting it would have re-added dead complexity AND left the real hazard unfixed; the actual fix lived in a different module.)
+
+   The same split applies to any external claim that bundles a diagnosis with a fix — a subagent's report, a code-review comment, a library's error message suggesting a flag. Diagnosis and prescription are separately checkable.
+
 5. **Clean up** — `rm -f /tmp/agy-prompt.txt`
 
 ## Role Priming

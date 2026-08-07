@@ -110,6 +110,15 @@ If there are uncommitted changes:
 - If changes look like completed work that was forgotten → ask USER before proceeding
 - Report what was done
 
+### Prune stale night-shift branches
+A prior run can leave a `night-shift/ns-NN` branch pointing at an ancient unrelated commit, which then blocks `git worktree add -b night-shift/ns-NN`. Before starting the queue, check for leftover local branches and prune any that are (a) not on `origin`, (b) not checked out in a worktree, and (c) not the stack tip a `resume` would need:
+```bash
+git branch --list 'night-shift/*'
+# for each candidate: git ls-remote --heads origin <branch> (empty = local-only) and git worktree list
+git branch -D <stale-branch>   # only after confirming all three conditions
+```
+(Evidence: 2026-08-05 smoke test — a stale `night-shift/ns-02` at an ancient tip blocked worktree creation.)
+
 ### Run existing test suite
 ```bash
 npm test
@@ -165,6 +174,27 @@ Each task should have:
 - **Priority** — HIGH, MED, LOW
 - **Review personas** — which personas to engage (or "auto" to select based on type)
 
+## Step 1.5: Evidence Gate (pre-dispatch)
+
+Before spending any work on a task whose spec is a **GitHub issue**, run the pre-dispatch evidence verifier. This is the standing gate from the night-shift feedstock work (#1275): it catches *false-READYs* — an issue whose premise has drifted in `main`, or whose test assumes a scenario the seed doesn't contain — before the loop builds against them. A false-READY doesn't fail loudly; it produces a *green* PR built on a phantom premise that the review gate then reasons inside of. Rationale + evidence: `~/Projects/dev-reference/briefs/night-shift-feedstock-evidence-verifier.md` (on its first production run the gate found **3 of 5** issues cycle-1 had promoted to "READY" were false-READYs).
+
+> **Dependency:** the gate artifacts (`~/Projects/dev-reference/prompts/night-shift-evidence-verifier.md`, `~/Projects/dev-reference/agents/night-shift-evidence-gate.mjs`) land when the `feature/night-shift-feedstock-slice0` branch merges. Until then they live in the `dev-reference-night-shift-feedstock` worktree. If the prompt file is absent, note it and proceed without the gate rather than blocking the run.
+
+**Applies to:** tasks whose spec is a GitHub issue number. Tasks with an inline spec or a human-authored spec file **bypass** the gate — the human already scoped them.
+
+1. Fetch the issue body: `gh issue view <N> --repo USER/example-app --json body --jq '.body'`.
+2. Spawn ONE verifier agent (`model: "sonnet"`). Its prompt is the full content of `~/Projects/dev-reference/prompts/night-shift-evidence-verifier.md`, with its caller-substituted tokens filled: `{{REPO_PATH}}` → `$HOME/Projects/example-app`, `{{SEED_PATH}}` → `supabase/seed.sql`, and `{{ISSUE_SOURCE}}` → the fetched issue body inlined directly (production path — no `frozen-issues.json` lookup). It reads current `main` at `{{REPO_PATH}}` for c1 and `{{SEED_PATH}}` / fixtures for c5, and returns the structured verdict object (`premise_verdict`, `premise_evidence`, `scenario_verdict`, `scenario_evidence`, `hold_reason`, …).
+3. Compute the gate **mechanically** — never trust the agent's own PASS/HOLD opinion. Import the no-LLM gate and apply it to the verdict JSON:
+   ```bash
+   node --input-type=module -e 'import("$HOME/Projects/dev-reference/agents/night-shift-evidence-gate.mjs").then(m=>{const o=JSON.parse(process.argv[1]); console.log(m.gate(o), "suspect="+m.isSuspect(o))})' "$VERDICT_JSON"
+   ```
+4. Route on the computed gate:
+   - **PASS** → proceed to Step 2 (Analyze).
+   - **HOLD** → **skip the task, do not build.** Mark it `[held]` in the queue; emit telemetry with `outcome: "skipped"` and `skip_reason: "evidence-gate-hold: <hold_reason>"`; post the `hold_reason` as a comment on the issue so the human queue can repair it (a drifted premise or a missing fixture). Move to the next task (Step 11 loop).
+   - **`suspect=true`** (a phoned-in verifier — stub note or <2 citations) → re-run the verifier **once**. If it still returns a suspect or HOLD verdict, treat as HOLD and skip.
+
+This gate never modifies code — a HOLD is a routing decision, not a failure. It is the input-side complement to the Step 5/8 review gates (which guard the output): the review gate can't catch a diff that correctly answers a question that was never real; this gate stops that question from reaching the loop.
+
 ## Step 2: Analyze
 
 Read the spec thoroughly. Then read the relevant source files. Understand:
@@ -216,6 +246,8 @@ For tasks that require code changes (not just test writing):
 2. Keep it proportionate — don't over-plan a one-line fix
 
 **Skip this step for test-only tasks** — the tests ARE the deliverable.
+
+**Export-for-testability collapses the two gates.** When a test-only task's ONLY source change is exporting an existing symbol so the test can import it (mirroring a sibling like `AccountRouteView`/`CompetitionsRouteView`), apply the `export` BEFORE the review gate and run ONE gate on the whole diff (Step 8). Running the Step 5 plan gate on the pre-export state manufactures a guaranteed BLOCKER from every persona ("X isn't exported") that is pure gate-sequencing noise, not a defect — then forces a redundant re-review round. The plan gate and impl gate are the same trivial diff; don't split them. (Evidence: 2026-08-05 smoke test NS-01 — both personas REQUEST_CHANGES on the planned-but-unapplied export.)
 
 ## Step 5: Review Gate (Plan)
 
@@ -285,6 +317,7 @@ Install dependencies in the worktree (`npm install`).
 - Work in the worktree
 - Make minimal, focused changes
 - Follow existing patterns (check codebase-map.md)
+- **Watch for generated/committed build artifacts that the build regenerates on deploy.** In example-app the committed `api/*.js` esbuild bundles are deploy-regenerated registration stubs, already collectively stale vs current `@example/contract`. For an `api/_src/*.ts` change, commit ONLY the `_src` source — regenerating the bundle injects unrelated contract-inlining drift (200+ lines) into the diff, and the `pr-gate` AS-3 drift check validates the source, not the artifact. **Exception:** a brand-NEW handler's first bundle IS mandatory (Vercel registers routes from the tracked tree; a missing bundle 404s to the catch-all). Whatever the repo, if regenerating an artifact balloons a focused diff with changes you didn't author, restore the artifact and commit source only. (Evidence: 2026-08-05 smoke test NS-02.)
 
 ### Run targeted tests
 ```bash

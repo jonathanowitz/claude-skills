@@ -21,7 +21,7 @@ Identify the repo:
 ```bash
 gh repo view --json nameWithOwner -q .nameWithOwner
 ```
-If in `example-context`, target `USER/example-app` and operate from `~/Projects/example-app`.
+If this is a docs-only repo in the example-app issue-tracker orbit (`example-context`, `dev-reference`, `claude-config` — see `references/product-json.md`'s orbit rule), target `USER/example-app` and operate from `~/Projects/example-app`. Every other repo reviews itself.
 
 ## Step 2: Collect Commits and Changed Files
 
@@ -34,12 +34,12 @@ For each commit, get the list of changed files:
 git diff-tree --no-commit-id --name-only -r <sha>
 ```
 
-Group changes into categories:
-- **API routes** — files under `api/`
-- **Web UI** — files under `web/` (JS, HTML, CSS)
-- **Parsers/tools** — files under `tools/`
+Group changes into categories derived from the current repo's actual top-level dirs (`ls` the repo root) rather than an assumed fixed set — example-app's own dirs are a worked example, not a universal shape:
+- **API routes** — files under an API dir (example-app: `api/`)
+- **App/UI** — files under a frontend dir (example-app: `web/` — JS, HTML, CSS)
+- **Parsers/tools** — files under a scripts/tools dir (example-app: `tools/`)
 - **Config/infra** — `.github/`, `vercel.json`, `package.json`, etc.
-- **Tests** — files under `tests/` or `e2e/` (these ARE test files, not coverage gaps)
+- **Tests** — files under the repo's test dirs (example-app: `tests/` or `e2e/`) (these ARE test files, not coverage gaps)
 
 ## Step 3: Map Existing Test Coverage
 

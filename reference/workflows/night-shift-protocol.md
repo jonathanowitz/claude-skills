@@ -54,6 +54,8 @@ Created by:
 - `/bug-squash` (generates priority list → convert to queue)
 - Manual creation for feature work
 
+**Before an issue enters the queue, run it through the queue-readiness rubric** (`night-shift-queue-readiness.md`) — the front-door check that a candidate's premise is still true, its decisions are made, and it has a test oracle. The loop's runtime gates catch a *stuck* task; they do not catch a *stale* one (a false premise every persona ratifies). The premise check requires reading the current code at each cited location, not grepping the issue.
+
 ### Review Personas (`~/Projects/dev-reference/agents/review-*.md`)
 Six independent reviewer agents, each in its own file:
 - `review-code-expert.md` — correctness, test quality, logic errors

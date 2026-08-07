@@ -5,6 +5,8 @@
 
 ---
 
+**Scope note:** The stages, gates, and tool assignments below are the universal sequencing authority. The specific paths and board names (checkout paths, `example-context/`, board names) are example-app's — substitute the current repo's own checkout path, its own context sibling if it declares one (see `references/product-json.md`), and its own tracker/board.
+
 ## Core Principles
 
 ### Quality Over Speed
@@ -98,7 +100,7 @@ Prevent strategic/tactical context switching:
    - Output: problem brief (problem statement, current state, success criteria, constraints, cost of inaction)
    - No solution language — just the problem
 
-2. **Save problem brief** to `example-context/briefs/` or project ideas file
+2. **Save problem brief** to the repo's context sibling's `briefs/` if it declares one (example-app → `example-context/briefs/`), or the project's own ideas file otherwise
 
 3. **Brief-vs-shipped audit** (mandatory for any slice past the first in a multi-slice brief)
    - For each file the brief references, diff the current file against the brief's quoted snippets / line numbers / assumed state.
@@ -148,6 +150,18 @@ Prevent strategic/tactical context switching:
 6. **Create GitHub issue** with the finalized brief content
 
 7. **Create worktree + feature branch** — implementation begins here, not before
+
+### Stage 3.5: Per-Slice Build-Shaping (multi-slice epics only)
+**Collaborative: Human + Claude Code (+ optional Gemini)**
+
+A shaped epic brief (Stage 3) decomposes into vertical slices but does **not** plan each slice's implementation — it can't, because each slice past the first builds on merged code the earlier slices changed. Each slice gets a lightweight build-shaping pass **before its Stage 4**. This is the "know the ground before you plan the step" gate; skipping it means planning against a fiction.
+
+1. **Map the actual merged state** — run the Stage 2 brief-vs-shipped audit against the substrate the prior slice actually left. What did the last slice ship? What's stubbed, orphaned, or already done? (Evidence: 2026-07-31 producer-workspace Slice 1 — the prior slice had already landed the *entire backend*; the slice was pure frontend re-home, not the "build reconcile + publish" the epic brief implied. A plan written from the epic brief alone would have been fiction. A single Explore agent mapping the merged state reframed the whole slice.)
+2. **Decompose into atomic test-first steps** — each step maps to behavior-map entries from the epic brief; order the steps so the e2e spec grows *incrementally* rather than sitting RED until the end of the last step.
+3. **Surface the slice's open decisions** as `[USER]{}` slots in the build-plan doc (fold-in of adjacent bugs, primitive/layout choices, one-PR-vs-split). Don't decide unilaterally.
+4. **Optional build-plan second opinion** — for a slice with non-trivial integration surface, a *single-pass* cross-model review catches "re-home / reskin" steps that are actually net-new build against the merged code. **Grep-verify every finding** — the reviewer can't see the repo, so it has a high false-positive rate (relaying unverified findings makes the plan worse). See `~/Projects/dev-reference/methodology/cross-model-review-cycle.md` → Build-plan-level review.
+
+**Output:** an atomic build-plan doc (in the context sibling's `briefs/`, named `<epic>-slice<N>-build.md`) that the slice's Stage 4 tests are written from. For a **single-slice** feature, Stage 3's brief *is* the build plan — skip this stage.
 
 ### Stage 4: Test Specs (Red/Green TDD)
 **Claude Code writes, Human reviews**
@@ -374,9 +388,9 @@ Stage 4 does not ship until every gate below has fired. Self-trigger each one fr
 #### Gates for this stage — post-merge
 
 - [ ] `POST_MERGE_HOOK` signal acted on (session capture + background cleanup per `~/.claude/rules/hooks-and-agents.md`)
-- [ ] Architecture docs updated in `example-context/` (codebase-map, app-behavior-map, database-schema as applicable)
+- [ ] Architecture docs updated in the repo's context sibling if it declares one (example-app → `example-context/`; codebase-map, app-behavior-map, database-schema as applicable)
 - [ ] Behavior map entries re-tagged from `[untested]` to `[unit]` / `[e2e]` as tests landed
-- [ ] Worktree + local branch removed by the post-merge cleanup agent (runs from main example-app checkout via absolute paths — no deferral)
+- [ ] Worktree + local branch removed by the post-merge cleanup agent (runs from the main checkout of the merged PR's own repo via absolute paths — no deferral; e.g. example-app's main checkout for an example-app PR)
 
 ---
 
@@ -556,7 +570,8 @@ Never use underscores or brackets as placeholders — just leave the field blank
 
 ---
 
-**Last Updated:** 2026-04-16
-**Version:** 1.4 — Added brief-vs-shipped audit to Stage 2. Added "Gates for this stage" self-trigger checklists to Stages 4, 5, 6, 7 (closes the "proactive gate triggering" gap identified in the 2026-04-16 maintenance report).
-**Previous:** 1.3 — Added "Refactor as You Go" core principle. Added Refactor-as-Mitigation pass to Stage 3 (between shape and Gemini) and explicit pre-mortem step (Stage 3 step 4).
+**Last Updated:** 2026-07-31
+**Version:** 1.5 — Added Stage 3.5 (Per-Slice Build-Shaping) for multi-slice epics: map merged state → atomic test-first decompose → decision slots → optional single-pass build-plan second opinion. Formalizes the informal step that was already happening per-slice. (Evidence: 2026-07-31 producer-workspace Slice 1.)
+**Previous:** 1.4 — Added brief-vs-shipped audit to Stage 2. Added "Gates for this stage" self-trigger checklists to Stages 4, 5, 6, 7 (closes the "proactive gate triggering" gap identified in the 2026-04-16 maintenance report).
+**1.3** — Added "Refactor as You Go" core principle. Added Refactor-as-Mitigation pass to Stage 3 (between shape and Gemini) and explicit pre-mortem step (Stage 3 step 4).
 **Maintained by:** USER / Claude Code

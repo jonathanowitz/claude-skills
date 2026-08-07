@@ -1,7 +1,7 @@
 ---
 description: Frame a problem before jumping to solutions
 argument-hint: <problem, idea, or observation>
-allowed-tools: [Read, Edit, Write, AskUserQuestion]
+allowed-tools: [Read, Edit, Write, AskUserQuestion, Bash, Grep]
 ---
 
 # Frame the Problem
@@ -15,6 +15,17 @@ Most ideas arrive as embedded solutions — "we need feature X" or "add a button
 **The goal is a clear problem statement, NOT a solution.**
 
 ## Instructions
+
+### Step 0: Is this already shaped? (REQUIRED — before any framing)
+
+Framing something that already has a shaped brief re-derives solved work and can duplicate it. If `$ARGUMENTS` names or points at an issue #, check for an existing shaped brief FIRST:
+
+- Scan `~/Projects/dev-reference/briefs/` (and `briefs/archive/`) for a brief whose `issue:` YAML frontmatter matches the number — that frontmatter is the authoritative, machine-readable brief→issue link (a prose `**GitHub:**` line or a body `#NN` is display, not identity).
+- `gh issue view <N> --json comments,body` — read the **comments**, not just body/labels. A "Shaped" comment supersedes a stale `needs-shaping` **label**; state is identity, labels/notes are display.
+
+If a shaped brief exists → **STOP. Do not re-frame.** Report what you found and route to `/implement` (or a `/shape-project` refresh only if the premise has genuinely moved — see shape-project step 3a). Only when no shaped brief exists do you proceed to Step 1.
+
+(Evidence: 2026-08-04 #1232 near-miss — ran `/frame` then began `/shape-project` on a slice that was already framed AND shaped the day before, caught only by shape-project's own step-3a *after* a full framing conversation and a duplicate `project-ideas.md` entry. Root cause: acted on a carryover "kick it off with its own /frame" note + a stale `needs-shaping` label, reading body/label but never comments or the brief. This Step 0 is the earlier guard.)
 
 ### Step 1: Identify what was said vs. what's underneath
 

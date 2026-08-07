@@ -2,6 +2,8 @@
 
 **Purpose:** Ensure consistent, actionable continuation points for each project after session capture.
 
+**Authoritative priority/state = the "Project Tracker" board (GitHub Project #1), not this file (2026-07-17).** `next-steps.md` is a session-handoff *narrative* (what happened + immediate continuation context), **not** a priority source. Its `## Immediate next step` must **mirror** the board's `Now`/`Next`, never compete with or override it. See `~/Projects/dev-reference/workflows/work-state-tracker.md`.
+
 **Location:** ONE canonical `next-steps.md` per project. Worktrees, branches, and parallel checkouts must all read/write the same file — no sibling copies.
 
 **Canonical paths:**
@@ -22,7 +24,7 @@
 **Last Updated:** YYYY-MM-DD (link to session file)
 **Current Phase:** [Brief phase name, e.g., "Shaping", "Slice 1 - CRUD", "Testing"]
 
-## Immediate Next (Highest Priority)
+## Immediate next step
 1. [Specific action - be concrete]
 2. [Specific action - be concrete]
 3. [Specific action - be concrete]
@@ -60,7 +62,8 @@ cd [path]
 4. **Link sessions:** Reference the session file that created these next steps
 5. **Keep it current:** Update every session if you worked on that project
 6. **One file per project:** All next steps in one place, easy to find
-7. **Max 300 lines:** When the file exceeds 300 lines, prune completed and stale sections. Archive old content to the most recent session file rather than keeping it inline. The file must stay useful as a fast resume point — not become a changelog
+7. **Max 100 lines:** When the file exceeds 100 lines, prune completed and stale sections. Archive old content to the most recent session file rather than keeping it inline. The file must stay useful as a fast resume point — fit on roughly one screen — not become a changelog. (Was 300; lowered 2026-07-31 after a 143-line file was already degraded — the line cap is a backstop, rule 8 is the real signal.)
+8. **Exactly one `## Immediate next step`:** A resume point has a single current next step. More than one is the changelog rot rule 7 guards against, and it shows up structurally long before the line cap does — a 143-line file with six `## Immediate next step` sections is the evidence this rule exists. Collapse to the one that is actually next; archive the rest to the session file.
 
 ## Example
 
@@ -70,7 +73,7 @@ cd [path]
 **Last Updated:** 2026-01-29 (session-2026-01-29-14-00.md)
 **Current Phase:** Slice 1 Implementation - Dimension CRUD
 
-## Immediate Next (Highest Priority)
+## Immediate next step
 1. Create React component structure for Dimensions Tab (P1)
 2. Implement addDimension function (C1)
 3. Build dimension list display with delete button (U6, U8)
@@ -106,7 +109,7 @@ npm run dev
 
 **When updating after a session:**
 1. Update **Last Updated** date and link to session file
-2. Replace **Immediate Next** with what was just decided
+2. Replace the **`## Immediate next step`** section with what was just decided
 3. Update **Commands to Run** if paths/setup changed
 4. Update **Files to Review** based on what was worked on
 5. Check **Blockers** - remove resolved ones, add new ones

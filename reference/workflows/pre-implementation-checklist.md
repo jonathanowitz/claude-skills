@@ -26,7 +26,7 @@ Run through this checklist before starting any feature or non-trivial task. Ever
 
 - [ ] **Scope is clear:** What's in? What's explicitly out? What rabbit holes should be avoided? If scope isn't clear, ask — don't assume.
 
-- [ ] **Clickable prototype validated:** For any feature with new UI or changed UI patterns, generate a clickable prototype from the breadboard's UI affordances. Click through the flow, verify transitions make sense, and screenshot for the brief. If comparing approaches, build both as `/v1/` and `/v2/`. Skip for: pure backend changes, bug fixes to existing UI, config changes. Use any lightweight clickable-prototype tool.
+- [ ] **Clickable prototype validated:** For any feature with new UI or changed UI patterns, generate a clickable prototype in a clickable-prototype tool (`~/Projects/example-d`) from the breadboard's UI affordances. Click through the flow, verify transitions make sense, and screenshot for the brief. If comparing approaches, build both as `/v1/` and `/v2/`. Skip for: pure backend changes, bug fixes to existing UI, config changes. See `~/Projects/dev-reference/guides/example-d-prototyping.md`.
 
 - [ ] **Behavior map + test specs written:** Before any implementation code:
   1. Write behavior map entries for the feature — plain-language "when user does X, Y happens" descriptions including edge cases. Add to `app-behavior-map.md` tagged `[untested]`.
@@ -73,8 +73,9 @@ Run through this checklist before starting any feature or non-trivial task. Ever
   - (Evidence: 2026-04-01 #381 — unplanned `auth.js` async change broke 48 E2E tests. The file wasn't in the brief, had no test spec. The hook would have blocked the edit and forced a test-first approach.)
 
 - [ ] **Branch + worktree:** Plan-mode work → create a worktree with a feature branch. Quick fixes → commit to current working branch. If it goes through plan mode, it gets a worktree.
-  - `git -C $HOME/Projects/example-app worktree add ../<repo-name>-<short-description> -b feature/<short-description>` (or `fix/` for bug fixes)
-  - Session cwd stays on the main checkout; address worktree files by absolute path (`$HOME/Projects/example-app-<short-description>/...`). Do not `cd` into the worktree.
+  - `git -C <repo-root> worktree add ../<repo-name>-<short-description> -b feature/<short-description>` (or `fix/` for bug fixes) — e.g. `git -C $HOME/Projects/example-app worktree add ...` in example-app.
+  - Session cwd stays on the main checkout; address worktree files by absolute path (`<repo-root>-<short-description>/...`). Do not `cd` into the worktree.
+  - **Copy code-bound formative artifacts into the worktree.** If the formative phase produced a code-bound artifact — test plan, walk doc, migration draft — it was born in `<context_repo>/tmp/` (per `conventions/formative-artifact-routing.md`). Copy just those into `<worktree>/tmp/` now so they get committed with the code. Copy ONLY the code-bound set — never the thinking artifacts (pre-mortems, mockups); those stay in the context repo and must never enter the code repo's git history.
   - Post-merge cleanup agent removes the worktree and local branch automatically (see `~/.claude/rules/hooks-and-agents.md` § POST_MERGE_HOOK).
 
 - [ ] **Dependencies identified:** Does this block or get blocked by other issues? Set up links in GitHub. Check if migrations, API changes, or shared components are affected.

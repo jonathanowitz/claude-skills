@@ -43,6 +43,15 @@ These don't replace the iterate-until-PASS rule; they reduce the iteration count
 - Architectural amendments that override prior do-not-reopen entries
 - Any artifact where "I'm too close to see the structural issues" is plausibly true
 
+## Build-plan-level review (a distinct single-pass mode)
+
+A **build plan** — the per-slice implementation plan that decomposes one slice of a shaped epic into atomic test-first steps — benefits from a cross-model second opinion, but it is a *different mode* from the iterate-until-PASS cycle above, because it reasons about **already-merged code the reviewer cannot see**.
+
+- **What it catches that design-level review can't: integration gloss** — a step the plan calls "re-home" or "reskin" that is actually net-new build against the merged substrate. (Evidence: 2026-07-31, producer-workspace Slice 1 — Gemini caught that the Teams tab keyed on `uploadId` while the tab route only carried `competitionId`, so "thread the prop" was hiding a comp→active-upload resolution step. A real catch, folded into the plan. Design-level review of the epic brief could not have seen it — it only exists against the code the prior slice merged.)
+- **The caveat that makes it net-positive rather than noise:** the reviewer has no repo access, so it emits confident `[BLOCKER]`s about code that is already handled — a **high false-positive rate**. In that same 2026-07-31 pass, 2 of Gemini's 3 "BLOCKER"s were false against the merged commit (a "DataList needs new API" claim — the primitive was already slot-based; a "results cache pollution" claim — already comp-scoped by the prior slice). **Grep-verify every finding against the merged code before folding it, hazard AND remedy separately** (per the `second-opinion` skill's split). Relaying build-plan findings unverified makes the plan *worse*, not better — the whole value is in the verification filter.
+- **Single pass, not iterate-until-PASS.** A build plan is not a multi-section composition artifact; one verified pass is the value. Don't run the convergence loop on it.
+- **Where it sits in the process:** it's the optional cross-model step of the per-slice build-shaping gate — see `~/Projects/dev-reference/workflows/development-process.md` → Stage 3.5.
+
 ## When NOT to use
 
 - Code reviews (use the existing PR-review pattern instead)

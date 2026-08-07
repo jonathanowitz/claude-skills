@@ -1,5 +1,24 @@
 # Test Plan Conventions
 
+## A human walk contains ONLY what a machine structurally cannot check (HARD RULE)
+
+Before a line goes into a walk or preview doc, ask: **could an automated test assert this?** If yes, it does not go in the doc — no matter how important it is. Cite the test instead.
+
+USER's time is the scarcest input to the project. Asking him to hand-verify a checkbox that `deck.spec.js` already drives is asking him to be a slower, less reliable test runner. It also buries the handful of items that genuinely need him.
+
+What belongs in a walk, and essentially nothing else:
+
+- **Perception** — is the ramp visible, is the animation too fast, is the copy readable at a glance, is the element still on screen when it matters.
+- **Ergonomics** — is the control thumb-reachable, does the card feel attached to the cursor.
+- **Judgment** — is two clicks enough protection, is this notice reassuring or alarming, is this wording right.
+- **Guards the suite structurally cannot reach** — a secure-context throw under Playwright's `http://localhost`, a rule enforced in CSS before the JS branch runs. Name these explicitly as unreachable, and pair them with a mutation check rather than a checkbox.
+
+What never belongs: any assertion about counters, state transitions, error text, storage contents, resume behavior, or refusal of bad input. Those are tests. If one isn't yet, write the test — don't delegate it to USER.
+
+Format follows: **no checkboxes for machine-checkable facts.** A walk is a short list of questions, each with the context needed to answer it, and a closing pointer to the suite that covers everything else. Ten minutes of walking should be ten minutes of judgment, not thirty checkboxes and six questions.
+
+**Evidence:** 2026-07-10, decidr Slice 1 (PR #6). The walk doc opened by declaring "everything below has been executed by a machine — you are checking the parts a machine cannot see," then listed ~30 checkboxes, of which sections 1, 4, 5 and 7 were line-for-line restatements of `deck.spec.js`, `resume.spec.js` and `errors.spec.js`. Every §5 item had a named e2e test driving a real browser. USER stopped partway: *"you put too much stuff in there i don't care about. If you're testing mechanically and can verify/validate, I don't need to manually verify every single thing."* He wrote in the margin of §5: *"I don't want to do all this, can you just prove it works this way somehow."* Both real findings he did produce — witzcraft/decidr#11 and #12 — came from **Judge:** prompts, not from a single checkbox.
+
 ## Structure
 
 1. **Group by auth state** — Put all unauthenticated tests first, then authenticated tests. This minimizes sign-in/sign-out cycles during manual testing.

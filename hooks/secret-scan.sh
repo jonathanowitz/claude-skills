@@ -23,8 +23,10 @@ command=$(echo "$hook_input" | jq -r '.tool_input.command // ""')
 #   64-char hex strings (ADMIN_SECRET format)
 #   32-char hex strings (LOOPS_API_KEY format)
 
-# Pattern 1: Known service key prefixes
-prefix_pattern='sb_secret_[A-Za-z0-9_-]{10,}|sb_publishable_[A-Za-z0-9_-]{10,}|eyJhbGciOi[A-Za-z0-9_=-]{20,}|sk_live_[A-Za-z0-9]{10,}|sk_test_[A-Za-z0-9]{10,}|xkeysib-[A-Za-z0-9]{10,}|SG\.[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{30,}|gho_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}'
+# Pattern 1: Known service key prefixes + credential-bearing patterns
+#   PGPASSWORD=         Postgres password inline in command
+#   postgresql://...:.. Connection strings with embedded passwords
+prefix_pattern='sb_secret_[A-Za-z0-9_-]{10,}|sb_publishable_[A-Za-z0-9_-]{10,}|eyJhbGciOi[A-Za-z0-9_=-]{20,}|sk_live_[A-Za-z0-9]{10,}|sk_test_[A-Za-z0-9]{10,}|xkeysib-[A-Za-z0-9]{10,}|SG\.[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{30,}|gho_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|PGPASSWORD=[^ ]{4,}|postgresql://[^:]+:[^@]{4,}@'
 
 # Pattern 2: Bare 64-char hex strings (likely ADMIN_SECRET)
 hex64_pattern='"[0-9a-f]{64}"'
@@ -47,7 +49,7 @@ if echo "$command" | grep -qE "$prefix_pattern"; then
     "hookSpecificOutput": {
       "hookEventName": "PreToolUse",
       "permissionDecision": "deny",
-      "permissionDecisionReason": "BLOCKED: Hardcoded secret detected in command. NEVER put API keys or tokens directly in commands. Use: export $(grep -v '"'"'^#'"'"' .env | xargs) to load env vars, then reference via process.env.VAR_NAME."
+      "permissionDecisionReason": "BLOCKED: Hardcoded secret detected in command. NEVER put API keys, tokens, passwords, or connection strings directly in commands. Use: export $(grep -v '"'"'^#'"'"' .env | xargs) to load env vars, or use CLI tools that handle auth internally (e.g. supabase link + db push)."
     }
   }'
   exit 0

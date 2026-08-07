@@ -84,7 +84,7 @@ For each phase, list:
 
 ## Step 5: Write Test-Ready Behavior Map Entries
 
-This is the critical output that enables autonomous test generation. For each user-facing behavior in the feature, write a behavior map entry at this level of detail:
+This is the critical output that enables autonomous test generation. For each user-facing behavior in the feature, write a behavior map entry at this level of detail. *(Worked example — example-app's stack and entities. Match this level of detail for the repo under review's own selectors, API, and nouns, not these literal ones.)*
 
 ```markdown
 #### 32.1 "Performing Now" Button [web] [untested]

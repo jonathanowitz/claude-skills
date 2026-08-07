@@ -66,6 +66,17 @@ Use `Gemini 3.1 Pro (Low)` — breadth sweeps don't need the strongest model, th
 - **Depth-only** → medium confidence on that specific dimension
 - **Breadth-only** → evaluate carefully — often the highest-leverage catches because they're things you didn't know to look for
 - **Conflict** → investigate
+- **Hazard ≠ remedy** → every finding is two claims, verify each
+
+### Hazard and remedy are separately checkable
+
+A finding bundles "here is a failure" with "here is the fix." Those have independent truth values, and a *correct hazard lends unearned credibility to whatever remedy rides along with it* — you verify the failure, feel the finding check out, and adopt the fix untested.
+
+Trace the proposed remedy through the same concrete fixture that demonstrates the hazard. If it does not prevent that exact case, say so and solve it yourself. **Confirming the hazard is not confirming the finding.**
+
+Evidence: 2026-07-27, example-app #1224. Gemini correctly identified that the `/operator` index route (guarded by persona only, no scope check) could eject an operator holding three gyms out to fan home when a stale bookmark named a scope they no longer held. Its prescribed fix was to restore a deleted carve-out — but that carve-out's condition was `if (sameType.length > 0) return null`, which fires precisely when the operator holds other programs. It did not cover the case it was prescribed for. Adopting it would have re-added dead complexity and left the hazard unfixed; the real fix belonged to a different module entirely.
+
+Generalizes past cross-model review to any external claim pairing a diagnosis with a prescription — subagent reports, code-review comments, a library error suggesting a flag.
 
 ## When NOT to use this pattern
 

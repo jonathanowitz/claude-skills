@@ -8,13 +8,29 @@ Save a checkpoint of the current session without ending it.
 
 Create a session summary file in `~/.claude/sessions/` with the naming convention `session-YYYY-MM-DD-HH-MM.md` (use current date/time).
 
+## Step 0 — Re-read repo state BEFORE writing anything forward-looking
+
+**Run this first, every capture. It is cheap and it is the only thing standing between a capture and handing the next session work that is already done.**
+
+```bash
+# For EVERY repo this session touched (main checkouts and any worktrees):
+git -C <repo> log --oneline -10
+git -C <repo> status --short
+```
+
+A long session's picture of its own repo goes stale. Commits land from outside the conversation — USER commits directly, a background drain syncs, a merge happens in another terminal, an aborted script leaves the tree mutated. Everything you are about to write into **Current State**, **Open Questions / Blockers**, **Next Steps**, and the **resume prompt** is a claim about repo state *right now*, not about what you remember doing. Reconcile the two before writing: if a `log` line closes an item you were about to carry forward, mark it done instead; if `status` shows changes you did not make, find out what they are before describing the tree as clean.
+
+This applies with full force when you are certain. Certainty is what the check is for.
+
+**(Evidence: 2026-07-30, dream #1221 capture — wrote a Next Step and a resume prompt instructing a future session to add a stop condition to `pr-merge-gate.sh`, three minutes after USER had reverted that gate for exactly that reason. The background drain agent caught it; the parent session did not. One `git log --oneline -10` would have.)**
+
 The summary should include:
 
 1. **What was worked on** - Projects, files, features discussed or modified
 2. **Key decisions made** - Technical choices, design decisions, rationale
 3. **Current state** - Where things stand right now
 4. **Open questions or blockers** - Anything unresolved
-5. **Next steps** (regret-filtered) - Apply the regret test: "If I skip this, will it create real friction next session?" Only list items that pass. Keep to 1-3 genuinely urgent actions, not a brain dump.
+5. **Next steps** (regret-filtered) - Apply the regret test: "If I skip this, will it create real friction next session?" Only list items that pass. Keep to 1-3 genuinely urgent actions, not a brain dump. **Every item must survive Step 0's `git log` — an item a commit already closed is not a next step.**
 6. **Relevant file paths** - Key files for easy reference
 
 ## Reflections (Self-Assessment)
@@ -120,13 +136,12 @@ Keep it concise but complete enough to resume context later.
 Check if `~/.claude/pending-memories.md` exists and has entries. If so, present each entry to USER for a decision:
 
 1. Read `~/.claude/pending-memories.md`
-2. For each entry, show:
-   - The memory type (feedback, project, reference, user)
-   - The content
-   - Where it would be saved
-3. USER decides for each: **commit** (write to memory), **edit** (modify then write), or **discard**
-4. For committed entries, write the file to the target path and update `MEMORY.md`
-5. After all entries are resolved, clear `pending-memories.md` back to just the header
+2. **Write the candidates to a review DOC — never present them as `AskUserQuestion` options or as chat prose.** A memory candidate is a paragraph of prose with a target path; squeezed into an option label it is unreadable, and USER cannot make a real decision on something he cannot see. This is the general "reaction-worthy artifact" rule (`conventions/document-drafting-conventions.md`) applied here: write `~/Projects/example-context/memory-review/memory-review-YYYY-MM-DD.md` with one section per candidate — type, target path, the **full** content verbatim, and a one-line "why this was staged" — each followed by a disposition prompt on the line above a backtick-wrapped, **empty** `` `[USER]{}` `` slot. Chat is a thin pointer to the doc, not the review surface. **The doc MUST land inside the Obsidian vault (root `~/Projects/`), NOT in `~/.claude/tmp/` — that path is outside the vault and USER cannot open it to act on the slots. Use the dedicated `example-context/memory-review/` folder, NOT `tmp/`: the nightly `/dream` sweep + archiver operates on `tmp/`, so a pending review doc parked there can be swept/archived before USER dispositions it; `memory-review/` sits outside the sweep's path. It's delete-after-processing (step 6), so no `- [ ] Done` checkbox is needed — a doc present in the folder IS the pending signal.** (Evidence: 2026-07-28 — presented a single candidate through `AskUserQuestion`; USER: *"This format is not a good way to show me the memories, you need to write them to a doc because i can't see shit."* And 2026-08-01, twice: landed the doc in `~/.claude/tmp/`, which is not in his vault — *"once again, i can't review staged memories there."* The dedicated folder + delete-after-processing was USER's call, 2026-08-01.)
+3. **First ask whether it is a memory at all.** A candidate describing how a hook, script, gate, or workflow *behaves* is **protocol**, not memory — it belongs layered into the doc that already covers that mechanism (`claude-config/references/hooks-and-agents-detail.md`, `claude-config/rules/*`, `dev-reference/workflows/*`, `dev-reference/conventions/*`), next to the existing rule it qualifies. Memory is for things not derivable from the repo: preferences, judgment calls, project state. Route protocol candidates to the right doc instead of staging them, and say which doc you put it in. (Evidence: same session — a staged candidate about the PR-review hook firing on create-only was correctly re-routed by USER into the PR_CREATE_HOOK sections of `hooks-and-agents-detail.md` / `rules/hooks-and-agents.md` / `pre-pr-checklist.md`.)
+4. **Second filter — does a MEMORY actually change the outcome?** Before staging or committing, ask: could this be a hook, a gate, or a required output instead? A memory is a passive nudge read at session start; a failure that needs a check at a specific *moment* needs a MECHANISM at that moment — a hook, a gate, a required artifact, a step in the skill that owns the work. If the candidate describes such a failure, build the mechanism and stage nothing. Staging prose because the mechanism is harder is the anti-pattern. (Evidence: 2026-07-30 — USER discarded two candidates with *"i have absolutely zero confidence that a memory would have helped this"* and *"i basically don't trust you to actually follow"* prose I write to myself; the mechanical forms — sha-pinned review markers, per-item bulk-op guards — already existed or were the real fix.)
+5. USER decides for each: **commit** (write to memory), **edit** (modify then write), **relocate** (it's protocol — put it in the named doc), or **discard**
+6. For committed entries: run `touch ~/.claude/memory-disposition.active` (the memory-capture gate, `~/.claude/hooks/memory-capture-gate.sh`, blocks direct writes under `~/.claude/projects/*/memory/*` unless this flag is fresh), then write the file to the target path and update `MEMORY.md`, then `rm ~/.claude/memory-disposition.active`
+7. After all entries are resolved, **delete the review doc from `example-context/memory-review/`** (delete-after-processing — the committed memory files are the durable record, and each memory's disposition rationale belongs in its own body, not a kept review doc), then clear `pending-memories.md` back to just the header
 
 This step is not optional when pending memories exist. Memories that sit in staging go stale.
 

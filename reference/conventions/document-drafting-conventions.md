@@ -14,6 +14,26 @@ Conventions for documents USER will edit inline — hypothesis-first walk questi
 
 **Evidence:** 2026-05-28 a design walk Reflection 2 — drafted ADRs as finished prose ("where am I supposed to react to this?"). Same session, immediately repeated it: delivered a multi-part cascade *diagnosis* + 5 decisions as chat prose. USER: "please. always write to a doc so i can react for the love of everything." The diagnosis wasn't a "walk question," so the narrow scope didn't trip — proving the rule has to be artifact-purpose ("reaction-worthy"), not artifact-type. **2026-05-29 a design walk** — presented a Q0 producer-rhythm hypothesis in chat; USER: "can you add that to the doc so I can write against it inline please; **in general this process should almost entirely be done in the md docs**." Generalizes the rule from discrete reaction-worthy artifacts to the entire walk's working medium.
 
+## Plain-language first — any handoff, not just framework intros
+
+**Rule:** Lead with the plain-language human/product version before any jargon, in EVERY artifact USER reacts to or decides on — status updates, diagnoses, judgment-call hand-backs, review docs, pre-mortem findings — not only when introducing a methodology. Demote the implementation jargon (DB/auth/framework/CI terms) to a technical appendix below the plain-language lead.
+
+**Why:** Jargon blocks his decisions outright — "so much fucking jargon and it's very upsetting"; "i do not understand what you are saying." The rule kept being scoped in-head to "introducing a framework," so it failed to fire on infra status updates and judgment-call handoffs on code he hadn't been living in. The trigger is "is USER about to react to or decide on this?", not "am I introducing a methodology?"
+
+**How to apply:** before handing USER any status, diagnosis, or judgment call, ask "would this read as jargon to someone who hasn't been in this code this week?" If yes, lead with the plain-language version and move the jargon below. See memory `feedback_plain_language_over_jargon`.
+
+**Evidence:** 2026-07-07 — jargon-packed CI status update ("i do not understand what you are saying"); the rule was then noted as scoped too narrowly to framework intros. 2026-07-08 — M0 pre-mortem delivered in dense DB/auth jargon ("so much fucking jargon…", blocked a decision). 2026-07-13 — recurred on an S4 migration judgment call explained in implementation jargon, despite the memory having landed — proving the scope needs to be stated as any-handoff, not framework-intros.
+
+## Never hard-wrap prose
+
+**Rule:** One paragraph is ONE line in the source, however long. No manual line breaks at a column, no reflowing to ~80/90/100 chars. Line breaks exist only to separate paragraphs, list items, table rows, and code blocks. This governs every `.md` file — briefs, review docs, walk docs, session summaries, CLAUDE.md files, READMEs — plus PR and issue bodies.
+
+**Why:** USER's editor soft-wraps, so hard breaks wrap twice and the doc reads as ragged half-lines. Worse, they make the doc hostile to edit: every inserted word forces a manual rewrap of the paragraph, and every diff of a one-word change shows as a multi-line rewrite, which destroys review-ability of exactly the artifacts he is meant to react to inline.
+
+**How to apply:** if you find yourself counting characters to decide where to break a line, that *is* the bug — stop and let the line run. When editing an existing hard-wrapped doc, unwrap the paragraphs you touch.
+
+**Evidence:** recurring. Corrected again 2026-07-09 (decidr Slice 0 test-review doc): "you started doing the fucking text wrapping again. can you please put a line in the global CLAUDE.md that i DO NOT WANT YOU TO PUT LINE BREAKS INTO MARKDOWN DOCUMENTS BECAUSE I HAVE TEXT WRAPPING FOR THAT." Promoted to Critical Rule #6 in `~/.claude/CLAUDE.md` because a convention-file entry alone had not been firing.
+
 ## Answer slots: empty braces, not `...`
 
 **Rule:** End each hypothesis-first walk question with an EMPTY `[USER]{}` marker on its own line. NEVER put `...` (or `<your answer>`, `TBD`, any other placeholder text) inside the braces. **Always write the marker backtick-wrapped as inline code** (`` `[USER]{}` ``) — bare/unwrapped, Obsidian garbles the brackets and braces, so the slot renders broken. (Evidence: 2026-06-26 — wrote bare `[USER]{}` slots across the WitzCraft copy doc; "it needs to have the fucking backticks too or it shows up weird in the markdown on obsidian.")

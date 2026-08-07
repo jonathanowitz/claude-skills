@@ -24,10 +24,12 @@ Run through these steps sequentially at the beginning of every session.
 
 Do this **before** entering plan mode or proposing an approach:
 
+- **`git -C <repo> fetch origin` then compare local `main` to `origin/main` FIRST** — `git -C <repo> rev-list --left-right --count main...origin/main`. If local `main` is behind, say so out loud and treat the local checkout as **stale until refreshed**. This is a hard gate before any of the recon below: a stale `main` makes "branch already exists?", "is this built?", reuse-audits, and every absence-claim ("X doesn't exist in the codebase") unreliable. New worktrees must be based off `origin/main` (`git worktree add <path> -b <branch> origin/main`), never local `main`.
+  (Evidence: this is the #1 chronic theme across the 6/10–7/6 window — #937 red misdiagnosed as flake because local `main` was missing merged #935; a 4-fork reshape proposal built on "/my-results and /account don't exist" that was false because the checkout was 9 commits stale; a reuse-audit Explore agent returning "Build-new" from a tree 4 commits behind origin.)
 - `git branch | grep <feature>` — does a branch already exist for this work?
 - If branch exists: `git log <branch>` — is the work already done or partially done?
 - Check `next-steps.md` for the target project — what's the current resume point?
-- **Check `~/Projects/example-context/briefs/` for any brief matching the topic keywords** — if a brief already exists, the session question shifts from "what are we doing?" to "where are we in this?" A brief in progress changes the framing entirely; find it before asking framing questions.
+- **Check the current project's briefs location for any brief matching the topic keywords** — its context sibling if one is declared (`resolve_product_field context_repo`; example-app → `example-context/briefs/`), otherwise the repo's own `briefs/` or `tmp/` — if a brief already exists, the session question shifts from "what are we doing?" to "where are we in this?" A brief in progress changes the framing entirely; find it before asking framing questions.
   (Evidence: 2026-05-31 — framing questions drafted without checking briefs directory; existing brief found mid-session and the framing restarted.)
 - `gh pr list --repo <owner/repo>` — are there open PRs? Open PRs represent active work that may not be in `next-steps.md`.
 - If a worktree exists for this project, check its `next-steps.md` too — the worktree is where active work lives, and its next-steps diverges from main.
@@ -67,3 +69,7 @@ When the last session's resume prompt (or `next-steps.md`, or a recent checkpoin
 - 2026-05-20 LB1-foldback — interpreted "try again / try again" as drain/fold-back directive; was actually a 529 retry.
 
 Each instance cost a redirect before the session could proceed correctly. A 30-second confirmation at session start would have prevented all three.
+
+## 8. Where formative artifacts go — the two-home rule (standing)
+
+Sessions start in the code checkout, so the reflex is to write every scratch artifact to the nearest `tmp/` — which is the code repo's gitignored `tmp/`, where thinking artifacts orphan and pile up. Don't. When you write a **thinking artifact** this session — a pre-mortem, UI mockup, shaping/framing scratch, triage ledger or decidr deck — it goes in **`<context_repo>/tmp/`** (`resolve_product_field context_repo`; example-app → `~/Projects/example-context/tmp/`), never the code repo. Only **code-bound artifacts** (test plan, walk doc, migration draft) get copied into `<worktree>/tmp/` at worktree creation and committed with the code. Full rule + rationale: `conventions/formative-artifact-routing.md`. (Origin: example-app#1278.)
